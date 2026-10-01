@@ -32,7 +32,11 @@ import {
 } from "@/types";
 
 const getApiBaseUrl = (): string => {
-  const rawUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const rawUrl =
+    process.env.NEXT_PUBLIC_API_URL ||
+    (typeof window !== "undefined" && window.location.hostname.includes("vercel.app")
+      ? "https://agentic-backend-api-v1.loca.lt"
+      : "http://localhost:8000");
   const cleanUrl = rawUrl.replace(/\/+$/, "");
   if (cleanUrl.endsWith("/api/v1")) {
     return cleanUrl;
@@ -44,6 +48,7 @@ export const apiClient: AxiosInstance = axios.create({
   baseURL: getApiBaseUrl(),
   headers: {
     "Content-Type": "application/json",
+    "Bypass-Tunnel-Remainder": "true",
   },
   timeout: 30000,
 });
@@ -51,10 +56,13 @@ export const apiClient: AxiosInstance = axios.create({
 // Request interceptor to attach JWT token
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    if (typeof window !== "undefined") {
-      const token = localStorage.getItem("access_token");
-      if (token && config.headers) {
-        config.headers.Authorization = `Bearer ${token}`;
+    if (config.headers) {
+      config.headers["Bypass-Tunnel-Remainder"] = "true";
+      if (typeof window !== "undefined") {
+        const token = localStorage.getItem("access_token");
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
       }
     }
     return config;
