@@ -1,0 +1,135 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: agentic_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: agentic_user
+      POSTGRES_PASSWORD: agentic_password
+      POSTGRES_DB: agentic_automation
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agentic_user -d agentic_automation"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: agentic_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: agentic_backend
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_NAME=Self-Improving Agentic Task Automation System
+      - APP_VERSION=1.0.0
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - API_V1_PREFIX=/api/v1
+      - BACKEND_CORS_ORIGINS=["http://localhost:3000","http://127.0.0.1:3000","http://localhost:3001","http://127.0.0.1:3001"]
+      - POSTGRES_USER=agentic_user
+      - POSTGRES_PASSWORD=agentic_password
+      - POSTGRES_DB=agentic_automation
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - DATABASE_URL=postgresql+psycopg://agentic_user:agentic_password@db:5432/agentic_automation
+      - SECRET_KEY=O7b7MJ_8Hh1xsN5zNfFfHU9QGqnJCy5-bXEzWlyeoV9aghwUlAqneuFOVUC6cVOV
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: agentic_frontend
+    restart: always
+    ports:
+      - "3001:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:8000
+    depends_on:
+      - backend
+
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: agentic_celery_worker
+    restart: always
+    command: celery -A app.core.celery_app worker --loglevel=info
+    environment:
+      - APP_NAME=Self-Improving Agentic Task Automation System
+      - ENVIRONMENT=development
+      - POSTGRES_USER=agentic_user
+      - POSTGRES_PASSWORD=agentic_password
+      - POSTGRES_DB=agentic_automation
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - DATABASE_URL=postgresql+psycopg://agentic_user:agentic_password@db:5432/agentic_automation
+      - SECRET_KEY=O7b7MJ_8Hh1xsN5zNfFfHU9QGqnJCy5-bXEzWlyeoV9aghwUlAqneuFOVUC6cVOV
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: agentic_prometheus
+    restart: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    depends_on:
+      - backend
+
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: agentic_grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+volumes:
+  postgres_data:
+  prometheus_data:
+  grafana_data:
+

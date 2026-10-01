@@ -1,0 +1,86 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 1,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "id": 1,
+      "title": "API HTTP Request Throughput",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "sum(rate(http_requests_total[1m])) by (method, status_code)",
+          "legendFormat": "{{method}} {{status_code}}"
+        }
+      ]
+    },
+    {
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "id": 2,
+      "title": "API Request Latency (p95)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p95 Latency (s)"
+        }
+      ]
+    },
+    {
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "id": 3,
+      "title": "Task & Workflow Executions",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "sum(task_executions_total) by (status)",
+          "legendFormat": "Task {{status}}"
+        },
+        {
+          "datasource": "Prometheus",
+          "expr": "sum(workflow_executions_total) by (status)",
+          "legendFormat": "Workflow {{status}}"
+        }
+      ]
+    },
+    {
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "id": 4,
+      "title": "Agent Execution & Self-Improvement",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "sum(agent_executions_total) by (role)",
+          "legendFormat": "Agent {{role}}"
+        },
+        {
+          "datasource": "Prometheus",
+          "expr": "sum(self_improvement_experiments_total) by (outcome)",
+          "legendFormat": "Experiment {{outcome}}"
+        }
+      ]
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": ["agentic", "monitoring"],
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Self-Improving Agentic System Overview",
+  "uid": "agentic-system-overview",
+  "version": 1
+}
+

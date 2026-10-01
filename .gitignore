@@ -1,0 +1,46 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Python virtual environments & build artifacts
+.venv/
+venv/
+ENV/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+*.pytest_cache/
+.coverage
+htmlcov/
+
+# Databases & local state
+*.db
+*.sqlite
+*.sqlite3
+chroma_db/
+agentic_automation.db
+test_import.log
+*.log
+
+# Frontend build & dependencies
+node_modules/
+frontend/node_modules/
+.next/
+frontend/.next/
+out/
+frontend/out/
+build/
+frontend/build/
+.vercel/
+frontend/.vercel/
+tsconfig.tsbuildinfo
+frontend/tsconfig.tsbuildinfo
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
