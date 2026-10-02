@@ -32,16 +32,15 @@ import {
 } from "@/types";
 
 const getApiBaseUrl = (): string => {
-  const rawUrl =
-    process.env.NEXT_PUBLIC_API_URL ||
-    (typeof window !== "undefined" && window.location.hostname.includes("vercel.app")
-      ? "https://agentic-backend-api-v1.loca.lt"
-      : "http://localhost:8000");
-  const cleanUrl = rawUrl.replace(/\/+$/, "");
-  if (cleanUrl.endsWith("/api/v1")) {
-    return cleanUrl;
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (envUrl && envUrl.startsWith("http")) {
+    const cleanUrl = envUrl.replace(/\/+$/, "");
+    return cleanUrl.endsWith("/api/v1") ? cleanUrl : `${cleanUrl}/api/v1`;
   }
-  return `${cleanUrl}/api/v1`;
+  if (typeof window !== "undefined") {
+    return "/api/v1";
+  }
+  return "http://127.0.0.1:8000/api/v1";
 };
 
 export const apiClient: AxiosInstance = axios.create({
