@@ -45,7 +45,25 @@ export function formatErrorMessage(err: any): string {
     return JSON.stringify(detail);
   }
 
-  if (err.message && typeof err.message === "string") return err.message;
+  const status = err.response?.status;
+  const message = err.message ? String(err.message) : "";
+
+  if (status === 404 || message.includes("404")) {
+    return "Invalid email or password, or account not found. Please check your credentials or register a new account.";
+  }
+  if (status === 401 || message.includes("401")) {
+    return "Invalid email or password. Please check your credentials.";
+  }
+  if (status === 403 || message.includes("403")) {
+    return "Access denied. You do not have permission to perform this action.";
+  }
+  if (message === "Network Error" || message.includes("Network Error")) {
+    return "Network error connecting to backend API. Please check your connection or try again.";
+  }
+
+  if (message && !message.startsWith("Request failed")) {
+    return message;
+  }
 
   return "An error occurred while processing your request.";
 }
